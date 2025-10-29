@@ -72,8 +72,8 @@ with st.sidebar.expander("🔍 Debug Info", expanded=False):
     st.write("**Sample Data (first 5 rows):**")
     st.write(df_kbli_cluster[['KODE_KBLI', 'JUDUL_KBLI', 'CLUSTER']].head())
 
-# Info Data di kanan atas - DIPERBAIKI dengan cleaning data
-col_info1, col_info2, col_info3, col_info4 = st.columns(4)
+# Info Data di kanan atas - DIPERBAIKI dengan tambahan KBLI Multi Cluster
+col_info1, col_info2, col_info3, col_info4, col_info5 = st.columns(5)
 
 with col_info1:
     # Bersihkan data sebelum menghitung
@@ -96,6 +96,11 @@ with col_info4:
     kbli_counts = df_clean['KODE_KBLI'].value_counts()
     single_cluster_kbli = len(kbli_counts[kbli_counts == 1])
     st.metric("KBLI Single Cluster", single_cluster_kbli)
+
+with col_info5:
+    # Hitung KBLI Multi Cluster - DITAMBAHKAN
+    multi_cluster_kbli = len(kbli_counts[kbli_counts > 1])
+    st.metric("KBLI Multi Cluster", multi_cluster_kbli)
 
 st.markdown("---")
 
@@ -309,8 +314,6 @@ with tab4:
             st.warning(f"Tidak ditemukan hasil untuk '{search_term}'")
 
 with tab5:
-    st.header("🔄 KBLI yang Diclusterkan Lebih dari 1 Cluster")
-    
     # Analisis data untuk menemukan KBLI multi-cluster
     @st.cache_data
     def find_multi_cluster_kbli(df_clean):
@@ -339,6 +342,8 @@ with tab5:
     
     # Cari data multi-cluster
     df_multi_cluster = find_multi_cluster_kbli(df_clean)
+    
+    st.header(f"🔄 KBLI Multi-Cluster ({len(df_multi_cluster)} KBLI)")
     
     if len(df_multi_cluster) > 0:
         # METRICS UTAMA
@@ -387,7 +392,7 @@ with tab5:
             else:  # 4+ Cluster
                 filtered_multi = filtered_multi[filtered_multi['JUMLAH_CLUSTER'] >= 4]
         
-        # VISUALISASI 1: Distribusi Jumlah Cluster
+        # VISUALISASI 1: Distribusi Jumlah Cluster - DIPERBAIKI
         st.subheader("📊 Distribusi KBLI Multi-Cluster")
         
         viz_col1, viz_col2 = st.columns(2)
@@ -404,7 +409,18 @@ with tab5:
                 color=cluster_dist.values,
                 color_continuous_scale='viridis'
             )
-            fig_dist.update_layout(showlegend=False)
+            # HILANGKAN SKALA DESIMAL - DIPERBAIKI
+            fig_dist.update_layout(
+                showlegend=False,
+                xaxis=dict(tickmode='linear', dtick=1),  # Pastikan angka bulat
+                yaxis=dict(tickformat='d')  # Format integer untuk y-axis
+            )
+            # Tambahkan annotation untuk setiap bar
+            fig_dist.update_traces(
+                text=cluster_dist.values,
+                textposition='outside',
+                hovertemplate='<b>%{x} Cluster</b><br>Jumlah KBLI: %{y}<extra></extra>'
+            )
             st.plotly_chart(fig_dist, use_container_width=True)
         
         with viz_col2:
@@ -458,7 +474,11 @@ with tab5:
                 color_continuous_scale='plasma',
                 labels={'Jumlah_Pasangan': 'Jumlah Kemunculan'}
             )
-            fig_pairs.update_layout(yaxis={'categoryorder':'total ascending'})
+            # HILANGKAN SKALA DESIMAL - DIPERBAIKI
+            fig_pairs.update_layout(
+                yaxis={'categoryorder':'total ascending'},
+                xaxis=dict(tickformat='d')  # Format integer untuk x-axis
+            )
             st.plotly_chart(fig_pairs, use_container_width=True)
             
             # Tampilkan tabel detail pairs
@@ -534,8 +554,6 @@ with tab5:
         st.info("Semua KBLI memiliki assignment cluster yang unik")
 
 with tab6:
-    st.header("✅ KBLI yang Hanya di 1 Cluster")
-    
     # Analisis data untuk menemukan KBLI single cluster
     @st.cache_data
     def find_single_cluster_kbli(df_clean):
@@ -562,6 +580,8 @@ with tab6:
     
     # Cari data single cluster
     df_single_cluster = find_single_cluster_kbli(df_clean)
+    
+    st.header(f"✅ KBLI Single Cluster ({len(df_single_cluster)} KBLI)")
     
     if len(df_single_cluster) > 0:
         # METRICS UTAMA
@@ -602,7 +622,7 @@ with tab6:
         if cluster_filter != "Semua":
             filtered_single = filtered_single[filtered_single['CLUSTER'] == cluster_filter]
         
-        # VISUALISASI: Distribusi per Cluster
+        # VISUALISASI: Distribusi per Cluster - DIPERBAIKI
         st.subheader("📊 Distribusi KBLI Single Cluster per Cluster")
         
         viz_col1, viz_col2 = st.columns(2)
@@ -619,9 +639,17 @@ with tab6:
                 color=cluster_dist_single.values,
                 color_continuous_scale='blues'
             )
+            # HILANGKAN SKALA DESIMAL - DIPERBAIKI
             fig_dist_single.update_layout(
                 showlegend=False,
-                xaxis_tickangle=-45
+                xaxis_tickangle=-45,
+                yaxis=dict(tickformat='d')  # Format integer untuk y-axis
+            )
+            # Tambahkan annotation untuk setiap bar
+            fig_dist_single.update_traces(
+                text=cluster_dist_single.values,
+                textposition='outside',
+                hovertemplate='<b>%{x}</b><br>Jumlah KBLI: %{y}<extra></extra>'
             )
             st.plotly_chart(fig_dist_single, use_container_width=True)
         
